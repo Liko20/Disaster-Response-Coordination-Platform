@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Disaster Response Platform</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      h2 {
+        margin-top: 2em;
+      }
+      form,
+      .card {
+        background: white;
+        padding: 1em;
+        border-radius: 8px;
+        margin-bottom: 2em;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+      }
+      button {
+        padding: 8px 16px;
+      }
+      pre {
+        background: #eee;
+        padding: 10px;
+        overflow: auto;
+      }
+    </style>
+    <script type="module">
+      import { v4 as uuidv4 } from "https://cdn.skypack.dev/uuid";
+
+      const output = document.getElementById("output");
+      const backend = "http://localhost:3000";
+
+      const show = (res) => {
+        output.textContent = JSON.stringify(res, null, 2);
+      };
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Auto-generate owner UUID on load
+        const ownerInput = document.querySelector("input[name='owner_id']");
+        ownerInput.value = uuidv4();
+
+        // Create Disaster
+        document.getElementById("create-disaster").onsubmit = async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const body = {
+            title: form.get("title"),
+            location_name: form.get("location_name"),
+            description: form.get("description"),
+            tags: form
+              .get("tags")
+              .split(",")
+              .map((t) => t.trim())
+              .filter((t) => t.length > 0),
+            owner_id: form.get("owner_id"),
+          };
+          const res = await fetch(`${backend}/disasters`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          show(await res.json());
+        };
+
+        // Submit Report
+        document.getElementById("submit-report").onsubmit = async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const body = {
+            user_id: form.get("user_id"),
+            content: form.get("content"),
+            image_url: form.get("image_url"),
+            disaster_id: form.get("disaster_id"),
+          };
+          const res = await fetch(`${backend}/reports`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          show(await res.json());
+        };
+
+        // Image Verification
+        document.getElementById("verify-image").onsubmit = async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const res = await fetch(
+            `${backend}/disasters/${form.get("disaster_id")}/verify-image`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ image_url: form.get("image_url") }),
+            }
+          );
+          show(await res.json());
+        };
+
+        // Geocode Location
+        document.getElementById("geocode").onsubmit = async (e) => {
+          e.preventDefault();
+          const form = new FormData(e.target);
+          const res = await fetch(`${backend}/geocode`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description: form.get("description") }),
+          });
+          show(await res.json());
+        };
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Disaster Response Platform</h1>
+
+    <h2>Create Disaster</h2>
+    <form id="create-disaster">
+      <input name="title" placeholder="Title" required />
+      <input name="location_name" placeholder="Location Name" required />
+      <textarea name="description" placeholder="Description"></textarea>
+      <input name="tags" placeholder="Tags (comma-separated)" />
+      <label>
+        Owner ID (auto-generated UUID):
+        <input name="owner_id" id="owner_id" readonly required />
+      </label>
+      <button type="submit">Create Disaster</button>
+    </form>
+
+    <h2>Submit Report</h2>
+    <form id="submit-report">
+      <input name="disaster_id" placeholder="Disaster ID" required />
+      <input name="user_id" placeholder="User ID" required />
+      <textarea name="content" placeholder="Report content" required></textarea>
+      <input name="image_url" placeholder="Image URL (optional)" />
+      <button type="submit">Submit Report</button>
+    </form>
+
+    <h2>Verify Image</h2>
+    <form id="verify-image">
+      <input name="disaster_id" placeholder="Disaster ID" required />
+      <input name="image_url" placeholder="Image URL" required />
+      <button type="submit">Verify</button>
+    </form>
+
+    <h2>Extract & Geocode Location</h2>
+    <form id="geocode">
+      <textarea
+        name="description"
+        placeholder="Disaster Description"
+        required
+      ></textarea>
+      <button type="submit">Extract & Geocode</button>
+    </form>
+
+    <h2>API Response</h2>
+    <pre id="output"></pre>
+  </body>
+</html>
