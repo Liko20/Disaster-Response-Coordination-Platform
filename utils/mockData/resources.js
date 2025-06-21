@@ -2,6 +2,7 @@ const supabase = require("../connection/connection");
 
 const DISASTER_ID = "492ac525-83df-4ecf-b10b-7ec8667319e1";
 
+
 const resources = [
   {
     disaster_id: DISASTER_ID,

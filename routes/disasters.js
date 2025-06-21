@@ -103,10 +103,25 @@ router.delete("/:id", async (req, res) => {
 
 router.get("/:id/social-media", async (req, res) => {
   const { id } = req.params;
+  const supabase = req.app.get("supabase");
+  const io = req.app.get("io");
+
   await login();
-  const keyword = `#disaster`;
+
+  const { data: disaster, error } = await supabase
+    .from("disasters")
+    .select("location_name")
+    .eq("id", id)
+    .single();
+
+  if (error || !disaster) {
+    return res.status(404).json({ error: "Disaster not found" });
+  }
+
+  const keyword = `#${disaster.location_name.replace(/\s+/g, "")}`;
   const posts = await searchPosts(keyword);
-  req.app.get("io").emit("social_media_updated", { disaster_id: id, posts });
+
+  io.emit("social_media_updated", { disaster_id: id, keyword, posts });
 
   res.json(posts);
 });
@@ -136,9 +151,9 @@ router.get("/:id/official-updates", async (req, res) => {
     .eq("key", cacheKey)
     .maybeSingle();
 
-  // if (cached && new Date(cached.expires_at) > now) {
-  //   return res.json({ source: "cache", updates: cached.value });
-  // }
+  if (cached && new Date(cached.expires_at) > now) {
+    return res.json({ source: "cache", updates: cached.value });
+  }
 
   try {
     const { data: html } = await axios.get(
@@ -201,8 +216,10 @@ router.post("/:id/verify-image", async (req, res) => {
       geminiResponse.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
       "No response";
 
-    // Optional: store result in 'reports' table with verification_status = "verified"
-    // await supabase.from("reports").update({ verification_status: "verified" }).eq("disaster_id", disasterId)
+    await supabase
+      .from("reports")
+      .update({ verification_status: "verified" })
+      .eq("disaster_id", disasterId);
 
     res.json({
       status: "verified",
