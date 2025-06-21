@@ -39,8 +39,6 @@
       }
     </style>
     <script type="module">
-      import { v4 as uuidv4 } from "https://cdn.skypack.dev/uuid";
-
       const backend = process.env.BASE_URL;
 
       const show = (targetId, res) => {
@@ -69,8 +67,7 @@
       document.addEventListener("DOMContentLoaded", () => {
         const socket = io(backend);
         const ownerInput = document.querySelector("input[name='owner_id']");
-        ownerInput.value = uuidv4();
-
+        ownerInput.value = crypto.randomUUID();
         // Create Disaster
         document.getElementById("create-disaster").onsubmit = async (e) => {
           e.preventDefault();
