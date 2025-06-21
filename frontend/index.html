@@ -40,6 +40,7 @@
     </style>
     <script type="module">
       const backend = process.env.BASE_URL;
+      console.log("Backend:", typeof backend, backend);
 
       const show = (targetId, res) => {
         document.getElementById(targetId).textContent = JSON.stringify(
