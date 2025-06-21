@@ -41,7 +41,7 @@
     <script type="module">
       import { v4 as uuidv4 } from "https://cdn.skypack.dev/uuid";
 
-      const backend = "http://localhost:3000"; // or use process.env.BASE_URL
+      const backend = process.env.BASE_URL;
 
       const show = (targetId, res) => {
         document.getElementById(targetId).textContent = JSON.stringify(
